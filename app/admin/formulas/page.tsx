@@ -10,6 +10,8 @@ interface Formula {
   formula_name: string;
   version: string;
   created_date: string;
+  status: 'needs_review' | 'approved' | 'rejected';
+  review_reasons: string[];
   ingredients: {
     ingredient_id: number;
     ingredient_name: string;
@@ -20,12 +22,22 @@ interface Formula {
 
 export default function FormulasPage() {
   const [formulas, setFormulas] = useState<Formula[]>([]);
+  const [filteredFormulas, setFilteredFormulas] = useState<Formula[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchFormulas();
   }, []);
+
+  useEffect(() => {
+    if (statusFilter === 'all') {
+      setFilteredFormulas(formulas);
+    } else {
+      setFilteredFormulas(formulas.filter(f => f.status === statusFilter));
+    }
+  }, [formulas, statusFilter]);
 
   const fetchFormulas = async () => {
     try {
@@ -66,10 +78,24 @@ export default function FormulasPage() {
         </Link>
       </div>
       
-      <h1 className="text-3xl font-bold mb-8">Formulas ({formulas.length})</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Formulas ({filteredFormulas.length})</h1>
+        <div className="flex gap-4">
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md bg-white"
+          >
+            <option value="all">All Status ({formulas.length})</option>
+            <option value="needs_review">Needs Review ({formulas.filter(f => f.status === 'needs_review').length})</option>
+            <option value="approved">Approved ({formulas.filter(f => f.status === 'approved').length})</option>
+            <option value="rejected">Rejected ({formulas.filter(f => f.status === 'rejected').length})</option>
+          </select>
+        </div>
+      </div>
       
       <div className="space-y-6">
-        {formulas.map((formula) => {
+        {filteredFormulas.map((formula) => {
           const totalPercentage = formula.ingredients.reduce((sum, ing) => sum + ing.percentage, 0);
           const isValidTotal = totalPercentage >= 99.5 && totalPercentage <= 100.5;
           
@@ -80,6 +106,15 @@ export default function FormulasPage() {
                   <h2 className="text-xl font-semibold">{formula.formula_name}</h2>
                   <p className="text-sm text-gray-600">Version: {formula.version}</p>
                   <p className="text-sm text-gray-600">Created: {new Date(formula.created_date).toLocaleDateString()}</p>
+                  <div className="mt-2">
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                      formula.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      formula.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {formula.status.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-medium ${isValidTotal ? 'text-green-600' : 'text-red-600'}`}>
@@ -90,6 +125,20 @@ export default function FormulasPage() {
                   </p>
                 </div>
               </div>
+              
+              {formula.review_reasons && formula.review_reasons.length > 0 && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <h3 className="text-sm font-medium text-yellow-800 mb-2">Review Issues:</h3>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    {formula.review_reasons.map((reason, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-yellow-600 mr-2">•</span>
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -115,6 +164,12 @@ export default function FormulasPage() {
           );
         })}
       </div>
+      
+      {filteredFormulas.length === 0 && formulas.length > 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No formulas found with the selected status.</p>
+        </div>
+      )}
       
       {formulas.length === 0 && (
         <div className="text-center py-12">

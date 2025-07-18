@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
           f.name as formula_name,
           f.version,
           f.created_date,
+          f.status,
+          f.review_reasons,
           COALESCE(
             json_agg(
               json_build_object(
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
         FROM formulas f
         LEFT JOIN formula_ingredients fi ON f.id = fi.formula_id
         LEFT JOIN ingredients i ON fi.ingredient_id = i.id
-        GROUP BY f.id, f.name, f.version, f.created_date
+        GROUP BY f.id, f.name, f.version, f.created_date, f.status, f.review_reasons
         ORDER BY f.name
       `);
 
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Get formulas only
       const result = await pool.query(`
-        SELECT id, name, version, created_date, updated_date
+        SELECT id, name, version, created_date, updated_date, status, review_reasons
         FROM formulas
         ORDER BY name
       `);
