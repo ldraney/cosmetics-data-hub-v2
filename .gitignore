@@ -56,3 +56,22 @@ fly.toml.backup
 
 # Testing
 .nyc_output
+
+# Temporary Data Processing Files 
+extracted-ingredients.json
+extracted-ingredients-complete.json
+formula-percentage-fixes.json
+formula-updates.json
+ingredient-import-summary.json
+formula-processing-log.md
+
+# Temporary Database Backups (keep the main production ones)
+database_export_verified_*.json
+database_verification_report_*.txt
+
+# Excel Source Files (exclude for security)
+*.xlsx
+*.xls
+
+# Temporary SQL Updates (keep essential ones)
+sql-updates/

@@ -10,7 +10,9 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "db:init": "node scripts/init-db.js",
-    "db:migrate": "node scripts/migrate.js"
+    "db:migrate": "node scripts/migrate.js",
+    "process-excel": "node scripts/process-excel.js",
+    "validate-formulas": "node scripts/validate-formulas.js"
   },
   "dependencies": {
     "csv-parse": "^6.1.0",
@@ -20,6 +22,7 @@
     "pg": "^8.16.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {

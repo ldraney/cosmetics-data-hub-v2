@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get all formulas with ingredients and check for review issues
     const result = await pool.query(`
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const formulasWithIssues = result.rows.map(formula => {
       const ingredients = JSON.parse(JSON.stringify(formula.ingredients));
-      const totalPercentage = ingredients.reduce((sum: number, ing: any) => sum + parseFloat(ing.percentage), 0);
+      const totalPercentage = ingredients.reduce((sum: number, ing: { percentage: string; ingredient_name: string }) => sum + parseFloat(ing.percentage), 0);
       const issues = [];
 
       // Check total percentage
@@ -38,18 +38,18 @@ export async function GET(request: NextRequest) {
       }
 
       // Check for duplicate ingredients
-      const ingredientNames = ingredients.map((ing: any) => ing.ingredient_name.toLowerCase());
+      const ingredientNames = ingredients.map((ing: { percentage: string; ingredient_name: string }) => ing.ingredient_name.toLowerCase());
       const duplicates = ingredientNames.filter((name: string, index: number) => 
         ingredientNames.indexOf(name) !== index
       );
       if (duplicates.length > 0) {
-        issues.push(`Duplicate ingredients: ${[...new Set(duplicates)].join(', ')}`);
+        issues.push(`Duplicate ingredients: ${Array.from(new Set(duplicates)).join(', ')}`);
       }
 
       // Check for zero percentages
-      const zeroPercentages = ingredients.filter((ing: any) => parseFloat(ing.percentage) === 0);
+      const zeroPercentages = ingredients.filter((ing: { percentage: string; ingredient_name: string }) => parseFloat(ing.percentage) === 0);
       if (zeroPercentages.length > 0) {
-        issues.push(`Zero percentage ingredients: ${zeroPercentages.map((ing: any) => ing.ingredient_name).join(', ')}`);
+        issues.push(`Zero percentage ingredients: ${zeroPercentages.map((ing: { percentage: string; ingredient_name: string }) => ing.ingredient_name).join(', ')}`);
       }
 
       return {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       const updates = [];
       for (const formula of result.rows) {
         const ingredients = JSON.parse(JSON.stringify(formula.ingredients));
-        const totalPercentage = ingredients.reduce((sum: number, ing: any) => sum + parseFloat(ing.percentage), 0);
+        const totalPercentage = ingredients.reduce((sum: number, ing: { percentage: string; ingredient_name: string }) => sum + parseFloat(ing.percentage), 0);
         const issues = [];
 
         // Calculate issues
@@ -104,17 +104,17 @@ export async function POST(request: NextRequest) {
           issues.push(`Total percentage: ${totalPercentage.toFixed(2)}% (should be 99.5-100.5%)`);
         }
 
-        const ingredientNames = ingredients.map((ing: any) => ing.ingredient_name.toLowerCase());
+        const ingredientNames = ingredients.map((ing: { percentage: string; ingredient_name: string }) => ing.ingredient_name.toLowerCase());
         const duplicates = ingredientNames.filter((name: string, index: number) => 
           ingredientNames.indexOf(name) !== index
         );
         if (duplicates.length > 0) {
-          issues.push(`Duplicate ingredients: ${[...new Set(duplicates)].join(', ')}`);
+          issues.push(`Duplicate ingredients: ${Array.from(new Set(duplicates)).join(', ')}`);
         }
 
-        const zeroPercentages = ingredients.filter((ing: any) => parseFloat(ing.percentage) === 0);
+        const zeroPercentages = ingredients.filter((ing: { percentage: string; ingredient_name: string }) => parseFloat(ing.percentage) === 0);
         if (zeroPercentages.length > 0) {
-          issues.push(`Zero percentage ingredients: ${zeroPercentages.map((ing: any) => ing.ingredient_name).join(', ')}`);
+          issues.push(`Zero percentage ingredients: ${zeroPercentages.map((ing: { percentage: string; ingredient_name: string }) => ing.ingredient_name).join(', ')}`);
         }
 
         if (issues.length > 0) {
